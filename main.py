@@ -55,7 +55,7 @@ def build_hierarchy(classes, aggregations):
     return multiplicity_map
 
 
-def generate_config_xml(classes, root_class_name, multiplicity_map, indent=4):
+def generate_config_xml(classes, root_class_name, indent=4):
     def build_xml(class_name, level=0):
         class_info = classes[class_name]
         indent_str = ' ' * (level * indent)
@@ -78,7 +78,7 @@ def generate_config_xml(classes, root_class_name, multiplicity_map, indent=4):
         root_class = classes.get(root_class_name)
     
     if not root_class:
-        raise ValueError("No root class found")
+        raise ValueError("Не найден корневой класс")
     
     xml_lines = build_xml(root_class['name'])
     return '\n'.join(xml_lines)
