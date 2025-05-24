@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+import json
 
 def parse_xml(input_file):
     tree = ET.parse(input_file)
@@ -83,6 +84,56 @@ def generate_config_xml(classes, root_class_name, multiplicity_map, indent=4):
     return '\n'.join(xml_lines)
 
 
+def generate_meta_json(classes, multiplicity_map):
+    meta = []
+    
+    for class_name in classes:
+        class_info = classes[class_name]
+        parameters = []
+        
+        for attr in class_info['attributes']:
+            parameters.append({
+                'name': attr['name'],
+                'type': attr['type']
+            })
+        
+        for child in class_info['children']:
+            param = {
+                'name': child,
+                'type': 'class'
+            }
+            parameters.append(param)
+        
+        class_entry = {
+            'class': class_name,
+            'documentation': class_info['documentation'],
+            'isRoot': class_info['isRoot'],
+            'parameters': parameters
+        }
+        
+
+        # у класса рут нет полей max и min
+        if not class_info['isRoot']:
+            min_val = '1'
+            max_val = '1'
+            for parent in classes:
+                if class_name in classes[parent]['children']:
+                    multiplicity = multiplicity_map[parent][class_name]
+                    if '..' in multiplicity:
+                        min_val, max_val = multiplicity.split('..')
+                    else:
+                        min_val = max_val = multiplicity
+                    break
+            
+            class_entry['min'] = min_val
+            class_entry['max'] = max_val
+        
+        meta.append(class_entry)
+    
+    return json.dumps(meta, indent=4)
+
+
+
 def main():
     input_file = 'impulse_test_input.xml'
     
@@ -104,6 +155,10 @@ def main():
     config_xml = generate_config_xml(classes, root_class, multiplicity_map)
     with open('./out/config.xml', 'w') as f:
         f.write(config_xml)
+
+    meta_json = generate_meta_json(classes, multiplicity_map)
+    with open("./out/meta.json", 'w') as f:
+        f.write(meta_json)
 
 if __name__ == '__main__':
     main()
